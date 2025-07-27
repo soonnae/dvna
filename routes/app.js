@@ -1,25 +1,32 @@
 var router = require('express').Router()
 var appHandler = require('../core/appHandler')
 var authHandler = require('../core/authHandler')
+var rateLimit = require('express-rate-limit')
+
+// Define a rate limiter for expensive operations
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100 // limit each IP to 100 requests per windowMs
+})
 
 module.exports = function () {
     router.get('/', authHandler.isAuthenticated, function (req, res) {
         res.redirect('/learn')
     })
 
-    router.get('/usersearch', authHandler.isAuthenticated, function (req, res) {
+    router.get('/usersearch', authHandler.isAuthenticated, limiter, function (req, res) {
         res.render('app/usersearch', {
             output: null
         })
     })
 
-    router.get('/ping', authHandler.isAuthenticated, function (req, res) {
+    router.get('/ping', authHandler.isAuthenticated, limiter, function (req, res) {
         res.render('app/ping', {
             output: null
         })
     })
 
-    router.get('/bulkproducts', authHandler.isAuthenticated, function (req, res) {
+    router.get('/bulkproducts', authHandler.isAuthenticated, limiter, function (req, res) {
         res.render('app/bulkproducts',{legacy:req.query.legacy})
     })
 
@@ -29,7 +36,7 @@ module.exports = function () {
 
     router.get('/useredit', authHandler.isAuthenticated, appHandler.userEdit)
 
-    router.get('/calc', authHandler.isAuthenticated, function (req, res) {
+    router.get('/calc', authHandler.isAuthenticated, limiter, function (req, res) {
         res.render('app/calc',{output:null})
     })
 
@@ -47,9 +54,9 @@ module.exports = function () {
 
     router.get('/redirect', appHandler.redirect)
 
-    router.post('/usersearch', authHandler.isAuthenticated, appHandler.userSearch)
+    router.post('/usersearch', authHandler.isAuthenticated, limiter, appHandler.userSearch)
 
-    router.post('/ping', authHandler.isAuthenticated, appHandler.ping)
+    router.post('/ping', authHandler.isAuthenticated, limiter, appHandler.ping)
 
     router.post('/products', authHandler.isAuthenticated, appHandler.productSearch)
 
@@ -57,11 +64,11 @@ module.exports = function () {
 
     router.post('/useredit', authHandler.isAuthenticated, appHandler.userEditSubmit)
 
-    router.post('/calc', authHandler.isAuthenticated, appHandler.calc)
+    router.post('/calc', authHandler.isAuthenticated, limiter, appHandler.calc)
 
-    router.post('/bulkproducts',authHandler.isAuthenticated, appHandler.bulkProducts);
+    router.post('/bulkproducts',authHandler.isAuthenticated, limiter, appHandler.bulkProducts);
 
-    router.post('/bulkproductslegacy',authHandler.isAuthenticated, appHandler.bulkProductsLegacy);
+    router.post('/bulkproductslegacy',authHandler.isAuthenticated, limiter, appHandler.bulkProductsLegacy);
 
     return router
 }
