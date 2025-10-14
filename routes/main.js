@@ -1,6 +1,14 @@
 var router = require('express').Router()
 var vulnDict = require('../config/vulns')
 var authHandler = require('../core/authHandler')
+var rateLimit = require('express-rate-limit') // Add rate limiting
+
+// Define rate limiter for login and reset password routes
+const authRateLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: 100, // Limit each IP to 100 requests per windowMs
+	message: "Too many requests, please try again later."
+})
 
 module.exports = function (passport) {
 	router.get('/', authHandler.isAuthenticated, function (req, res) {
@@ -48,7 +56,7 @@ module.exports = function (passport) {
 
 	router.get('/resetpw', authHandler.resetPw)
 
-	router.post('/login', passport.authenticate('login', {
+	router.post('/login', authRateLimiter, passport.authenticate('login', { // Apply rate limiter
 		successRedirect: '/learn',
 		failureRedirect: '/login',
 		failureFlash: true
@@ -60,9 +68,9 @@ module.exports = function (passport) {
 		failureFlash: true
 	}))
 
-	router.post('/forgotpw', authHandler.forgotPw)
+	router.post('/forgotpw', authRateLimiter, authHandler.forgotPw) // Apply rate limiter
 
-	router.post('/resetpw', authHandler.resetPwSubmit)
+	router.post('/resetpw', authRateLimiter, authHandler.resetPwSubmit) // Apply rate limiter
 
 	return router
 }
